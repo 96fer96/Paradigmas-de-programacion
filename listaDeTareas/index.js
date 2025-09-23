@@ -7,34 +7,64 @@ let opcion = 0;
 
 do {
   console.log(`\nHola, ${nombre}. ¿Qué te gustaría hacer?`);
-  console.log("1. Ver todas las tareas");
+  console.log("1. Ver tareas");
   console.log("2. Agregar una nueva tarea");
   console.log("3. Actualizar el estado de una tarea");
-  console.log("4. Eliminar una tarea");
-  console.log("5. Salir");
+  console.log("4. Buscar una tarea por título");
+  console.log("5. Eliminar una tarea");
+  console.log("6. Salir");
 
-  opcion = Number(prompt("Seleccione una opción (1-5): "));
+  opcion = Number(prompt("Seleccione una opción (1-6): "));
 
   switch (opcion) {
     case 1:
-        verTareas(listaTareas); 
+        verTareas(listaTareas);
         break;
     case 2:
-        agregarTarea(listaTareas); 
+        agregarTarea(listaTareas);
         break;
     case 3:
         if (listaTareas.length) actualizarTarea(listaTareas);
         else console.log("No hay tareas disponibles para actualizar.");
         break;
     case 4:
+      buscarTarea(listaTareas);
+      break;
+    case 5:
       if (listaTareas.length) eliminarTarea(listaTareas);
       else console.log("No hay tareas disponibles para eliminar.");
       break;
-    case 5: console.log("Saliendo del programa. ¡Hasta luego!"); break;
+    case 6: console.log("Saliendo del programa. ¡Hasta luego!"); break;
       default: console.log("Opción inválida.");
       break;
   }
-} while (opcion !== 5);
+} while (opcion !== 6);
+
+function buscarTarea(listaTareas) {
+  if (!listaTareas.length) return console.log("No hay tareas disponibles.");
+  
+  const clave = prompt("Ingrese una palabra clave para buscar: ").toLowerCase();
+  
+  const resultados = listaTareas.filter(t => t.titulo.toLowerCase().includes(clave));
+  /*
+  filter() crea un nuevo array con todos los elementos que cumplan la condición.
+  toLowerCase() convierte el string a minúsculas.
+  includes() verifica si la cadena contiene la subcadena especificada.
+  Si el título de la tarea (en minúsculas) incluye la clave (en minúsculas), se incluye en resultados.
+  Esto hace que la búsqueda no distinga entre mayúsculas y minúsculas.
+  */
+
+  
+  if (resultados.length) {
+    console.log("\nTareas encontradas:");
+    resultados.forEach((t, i) => {
+      console.log(`${i + 1}. ${t.titulo} - ${t.descripcion} [${t.estado}]`);
+    });
+  } else {
+    console.log("No se encontraron tareas que coincidan.");
+  }
+}
+
 
 function agregarTarea(listaTareas) {
   const titulo = agregarTitulo();
@@ -49,9 +79,10 @@ function agregarTarea(listaTareas) {
   const dificultad= agregarDificultad();
   const vencimiento= agregarVencimiento();
   
-  const tarea = { titulo, descripcion, estado, dificultad, vencimiento, fechaCreacion: new Date() };
+  const tarea = { titulo, descripcion, estado, dificultad, vencimiento, fechaCreacion: new Date(), ultimaModificacion: new Date() };
   listaTareas.push(tarea);
   console.log(`Tarea "${tarea.titulo}" agregada.`);
+  ordenarTareas(listaTareas);
 }
 
 function agregarDescripcion() {
@@ -132,22 +163,20 @@ function verTareas(listaTareas) {
   const opcion = Number(prompt("Seleccione una opción (1-4): "));
   switch (opcion) {
     case 1:
-      ordenarTareas(listaTareas);
       listarTareas(listaTareas);
       break;
     case 2:
+      /*El metodo filter toma todas las tareas que cumplan con la condicion solicitada y las almacena
+      en una nueva lista*/
       const pendientes = listaTareas.filter(t => t.estado === 'pendiente');
-      ordenarTareas(pendientes);
       listarTareas(pendientes);
       break;
     case 3:
       const enProgreso = listaTareas.filter(t => t.estado === 'en progreso');
-      ordenarTareas(enProgreso);
       listarTareas(enProgreso);
       break;
     case 4:
       const completadas = listaTareas.filter(t => t.estado === 'completa');
-      ordenarTareas(completadas);
       listarTareas(completadas);
       break;
     case 5:
@@ -156,14 +185,18 @@ function verTareas(listaTareas) {
       console.log("Opción inválida.");
       break;
   }
-  /*listaTareas.forEach((t, i) => {
-    console.log(`${i + 1}. [${t.estado}] ${t.titulo} - ${t.descripcion} (Creada: ${t.fechaCreacion.toLocaleString()}) - Vence: ${t.vencimiento} - Dificultad: ${t.dificultad}`);
-  });*/
 }
 
 function ordenarTareas(tareas) {
   return tareas.sort((a, b) => a.fechaCreacion - b.fechaCreacion);
 }
+
+/*
+sort() compara pares de elementos y si uno es mas antiguo que otro intercambia posiciones, ord. burbuja.
+La resta de fechas se traduce a números (timestamps).
+Eso determina el orden cronológico de las tareas. Si la diferencia es negativa, significa que a fue
+creado antes que b → a va primero. Si es positiva, a fue creado después → va después.
+*/
 
 function listarTareas(tareas) {
   console.log("Tareas:");
@@ -184,6 +217,13 @@ function listarTareas(tareas) {
   console.log(`\nFecha de creación: ${t.fechaCreacion.toLocaleString()}`);
   console.log(`\nFecha de vencimiento: ${t.vencimiento}`);
   console.log(`\nDificultad: ${t.dificultad}`);
+
+  const editar = prompt("¿Desea editar esta tarea? (s/n): ").toLowerCase();
+  if (editar === 's') {
+    editarTarea(tareas, detalle - 1);
+  } else if (editar !== 'n') {
+    console.log("Opción inválida.");
+  }
 }
 
 /*
@@ -198,12 +238,63 @@ t.fechaCreacion a un string legible según la configuración local de tu Windows
 (ejemplo: 22/9/2025 18:35:12).
 */
 
+function editarTarea(listaTareas, indiceTarea) {
+  const tarea = listaTareas[indiceTarea];
+  console.log(`\nQue campo desea editar?`);
+  console.log("1. Título");
+  console.log("2. Descripción");
+  console.log("3. Estado");
+  console.log("4. Dificultad");
+  console.log("5. Fecha de vencimiento");
+  console.log("6. Volver al menú principal");
+  const opcion = Number(prompt("Seleccione una opción (1-6): "));
+  switch (opcion) {
+    case 1:
+      tarea.titulo = agregarTitulo();
+      console.log("Título actualizado.");
+      tarea.ultimaModificacion = new Date();
+      break;
+    case 2:
+      tarea.descripcion = agregarDescripcion();
+      console.log("Descripción actualizada.");
+      tarea.ultimaModificacion = new Date();
+      break;
+    case 3:
+      const nuevoEstado = prompt("Nuevo estado (pendiente/en progreso/completa): ");
+      tarea.estado = nuevoEstado;
+      console.log("Estado actualizado.");
+      tarea.ultimaModificacion = new Date();
+      break;
+    case 4:
+      tarea.dificultad = agregarDificultad();
+      console.log("Dificultad actualizada.");
+      tarea.ultimaModificacion = new Date();
+      break;
+    case 5:
+      tarea.vencimiento = agregarVencimiento();
+      console.log("Fecha de vencimiento actualizada.");
+      tarea.ultimaModificacion = new Date();
+      break;
+    case 6:
+      break;
+    default:
+      console.log("Opción inválida.");
+      break;
+  }
+}
+
+/*
+los cambios se implementan directamente en el objeto dentro del arreglo, porque en JavaScript los 
+objetos no se copian por valor, sino por referencia.
+*/
+
 function actualizarTarea(listaTareas) {
   verTareas(listaTareas);
   const indice = Number(prompt("Número de la tarea a actualizar: ")) - 1;
   if (!Number.isInteger(indice) || indice < 0 || indice >= listaTareas.length) return console.log("Número inválido.");
   const nuevoEstado = prompt("Nuevo estado (pendiente/en progreso/completa): ");
   listaTareas[indice].estado = nuevoEstado;
+  listaTareas[indice].ultimaModificacion = new Date();
   console.log("Estado actualizado.");
 }
 
@@ -213,4 +304,5 @@ function eliminarTarea(listaTareas) {
   if (!Number.isInteger(indice) || indice < 0 || indice >= listaTareas.length) return console.log("Número inválido.");
   const [tareaEliminada] = listaTareas.splice(indice, 1);
   console.log(`Tarea "${tareaEliminada.titulo}" eliminada.`);
-}
+  }
+
