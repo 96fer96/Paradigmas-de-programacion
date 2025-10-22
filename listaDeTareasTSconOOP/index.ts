@@ -2,7 +2,7 @@
 import { constructorListaTareas } from './ListaTareas';
 import { constructorMenuPrincipal } from './MenuPrincipal';
 //creo un arreglo de objetos de tipo Tarea
-export const objetoListaTareas = new (constructorListaTareas as any)();
+const objetoListaTareas = new (constructorListaTareas as any)();
 const menuPrincipal = new (constructorMenuPrincipal as any) ();
 
 menuPrincipal.menu(objetoListaTareas);
