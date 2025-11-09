@@ -65,7 +65,6 @@ function buscarTarea(listaTareas) {
   }
 }
 
-
 function agregarTarea(listaTareas) {
   const titulo = agregarTitulo();
   const descripcion = agregarDescripcion();
@@ -84,6 +83,7 @@ function agregarTarea(listaTareas) {
   console.log(`Tarea "${tarea.titulo}" agregada.`);
   ordenarTareas(listaTareas);
 }
+
 
 function agregarDescripcion() {
   let descripcion = prompt("Descripción: ");
@@ -303,6 +303,10 @@ function eliminarTarea(listaTareas) {
   const indice = Number(prompt("Número de la tarea a eliminar: ")) - 1;
   if (!Number.isInteger(indice) || indice < 0 || indice >= listaTareas.length) return console.log("Número inválido.");
   const [tareaEliminada] = listaTareas.splice(indice, 1);
+/*
+La desestructuración con [ ] extrae ese único objeto y lo asigna a tareaEliminada, haciendo que tareaEliminada sea
+directamente una Tarea, no un array.
+*/
   console.log(`Tarea "${tareaEliminada.titulo}" eliminada.`);
   }
 
